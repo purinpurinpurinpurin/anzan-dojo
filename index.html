@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>暗算道場</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#2d5a3d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="暗算道場">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"Yu Gothic UI","Meiryo",sans-serif;background:#f3f1ea;color:#2b2b2b;font-size:17px;line-height:1.7}
+header{background:#2d5a3d;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
+header h1{font-size:20px;margin:0;cursor:pointer}
+header button{background:#fff2;color:#fff;border:1px solid #fff6;border-radius:8px;padding:6px 12px;font-size:15px;cursor:pointer;font-family:inherit}
+.sp{flex:1}
+main{max-width:860px;margin:0 auto;padding:16px 16px 60px}
+.card{background:#fff;border-radius:14px;padding:16px 18px;margin:12px 0;box-shadow:0 1px 4px #0001}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.btn{display:block;width:100%;text-align:left;background:#fff;border:2px solid #d6d2c4;border-radius:12px;padding:12px 14px;font-size:17px;cursor:pointer;font-family:inherit;color:inherit}
+.btn:hover{border-color:#2d5a3d}
+.btn b{display:block;font-size:18px}
+.btn small{color:#666}
+.btn.big{background:#2d5a3d;color:#fff;border-color:#2d5a3d}
+.btn.big small{color:#dfe}
+.sec{font-size:15px;color:#2d5a3d;font-weight:bold;margin:22px 0 4px;border-left:5px solid #e8a33d;padding-left:8px}
+.main-btn{background:#2d5a3d;color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:17px;cursor:pointer;font-family:inherit;margin:4px 4px 4px 0}
+.sub-btn{display:inline-block;background:#fff;color:#2d5a3d;border:2px solid #2d5a3d;border-radius:10px;padding:8px 16px;font-size:16px;cursor:pointer;font-family:inherit;margin:4px 4px 4px 0}
+.sub-btn.on{background:#2d5a3d;color:#fff}
+.bar{height:14px;background:#e4e0d4;border-radius:7px;overflow:hidden}
+.bar>div{height:100%;background:#e8a33d}
+.tag{display:inline-block;font-size:13px;padding:1px 8px;border-radius:9px;background:#e6efe8;color:#2d5a3d;margin-right:4px}
+.tag.z{background:#fff1d6;color:#9a5b00}
+.tag.must{background:#fde3e3;color:#b42318}
+.rank{display:inline-block;font-size:15px;padding:2px 12px;border-radius:9px;background:#2d5a3d;color:#fff;font-weight:bold}
+h2{font-size:22px;margin:4px 0 8px}
+h3{font-size:18px;margin:14px 0 4px;color:#2d5a3d}
+.rule{font-size:19px;font-weight:bold;color:#b4540a;margin:6px 0}
+.q{font-size:22px;font-weight:bold;margin:8px 0 14px;white-space:pre-wrap;line-height:1.6}
+.ans-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ans-row input{font-size:26px;width:220px;padding:6px 12px;border:3px solid #cfc9b8;border-radius:12px;font-family:inherit;text-align:right}
+.ans-row input:focus{outline:none;border-color:#2d5a3d}
+.unit{font-size:20px;color:#555}
+.choice{display:block;width:100%;text-align:left;margin:8px 0;padding:12px 14px;font-size:19px;border:2px solid #d6d2c4;border-radius:12px;background:#fff;cursor:pointer;font-family:inherit;color:inherit}
+.choice:hover:not(:disabled){border-color:#2d5a3d}
+.choice.ok{background:#e3f4e6;border-color:#3c8d5a}
+.choice.ng{background:#fde8e4;border-color:#d9534f}
+.res{border-radius:12px;padding:12px 14px;margin-top:12px}
+.res.ok{background:#e3f4e6}.res.near{background:#fff4dc}.res.ng{background:#fdeceb}
+.res .big{font-size:20px;font-weight:bold}
+.how{white-space:pre-wrap;background:#f7f5ef;border-radius:10px;padding:10px 14px;margin-top:8px;font-size:17px}
+.hint{background:#eef6f0;border:2px dashed #8fbf9c;border-radius:12px;padding:10px 14px;margin:8px 0}
+.muted{color:#777;font-size:15px}
+table{border-collapse:collapse;width:100%;font-size:16px}
+td,th{border-bottom:1px solid #eee;padding:6px 6px;text-align:left}
+th{background:#f3f1ea}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.calc label{display:flex;align-items:center;gap:8px;margin:6px 0}
+.calc label span{min-width:150px}
+.calc input{font-size:18px;width:140px;padding:4px 8px;border:2px solid #d6d2c4;border-radius:8px;font-family:inherit;text-align:right}
+.out{background:#eef6f0;border-radius:10px;padding:10px 14px;margin-top:8px;font-size:18px}
+.out b{color:#b4540a;font-size:20px}
+.timer{font-size:40px;font-weight:bold;color:#2d5a3d;text-align:center}
+.flash-ok{animation:fok .4s}.flash-ng{animation:fng .4s}
+@keyframes fok{from{background:#c9efd2}to{background:#fff}}
+@keyframes fng{from{background:#fbd0c9}to{background:#fff}}
+.stars{color:#e8a33d;letter-spacing:1px}
+textarea{width:100%;min-height:90px;font-size:16px;font-family:monospace;border:2px solid #d6d2c4;border-radius:8px;padding:6px}
+.note{background:#fff3e0;border-radius:10px;padding:8px 12px;margin:8px 0;font-size:15px}
+.ready{color:#2d5a3d;font-size:14px;margin:6px 0 0}
+@media (hover:none){.pc-only{display:none}}
+@media (max-width:520px){
+  body{font-size:16px}
+  main{padding:10px 10px 50px}
+  .card{padding:12px 13px}
+  .q{font-size:20px}
+  .ans-row input{width:170px;font-size:24px}
+  .calc label span{min-width:118px}
+  .calc input{width:110px}
+  td,th{padding:5px 4px;font-size:15px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1 onclick="go('home')">🧮 暗算道場</h1>
+  <div class="sp"></div>
+  <button onclick="go('home')">ホーム</button>
+</header>
+<main id="app"></main>
+
+<script src="data/tips.js"></script>
+<script>
+const {R, P, r1, r2, F} = window.AN;
+const TIPS = window.TIPS || [];
+const CATS = window.CATS || [];
+const BY = {}; TIPS.forEach(t => BY[t.id] = t);
+const CBY = {}; CATS.forEach(c => CBY[c.id] = c);
+const KEY = 'anzan_dojo_v1';
+const IV = [1, 3, 7, 14, 30, 60];
+const OK_LINES = ['正解！ いい感じ', '正解！ 頭の中だけで解けたね', 'お見事！', '正解！ その調子', '正解！ どんどん速くなるよ'];
+const NEAR_LINES = ['おしい！ かなり近いよ', 'おしい！ 考え方は合ってそう', 'あと少し！ 解き方を見てみよう'];
+const NG_LINES = ['だいじょうぶ、ここで覚えれば次は解ける', 'まちがえた所が一番のびる所だよ', 'いい練習になったね。解き方はこちら'];
+const RANKS = [
+  {n: '10級', c: ['kihon'], d: 1, k: 10, p: 8},
+  {n: '9級', c: ['kihon', 'kake'], d: 1, k: 10, p: 8},
+  {n: '8級', c: ['kaimono'], d: 1, k: 10, p: 8},
+  {n: '7級', c: ['ryori', 'tani'], d: 1, k: 10, p: 8},
+  {n: '6級', c: ['tenbai', 'okane'], d: 1, k: 10, p: 8},
+  {n: '5級', c: ['doujin', 'kihon', 'kaimono', 'okane', 'tenbai', 'ryori', 'kake', 'tani'], d: 1, k: 10, p: 9},
+  {n: '4級', c: ['kihon', 'kaimono', 'kake'], d: 2, k: 15, p: 13},
+  {n: '3級', c: ['ryori', 'tenbai', 'doujin'], d: 2, k: 15, p: 13},
+  {n: '2級', c: null, d: 2, k: 20, p: 18},
+  {n: '1級', c: null, d: 3, k: 20, p: 18},
+  {n: '初段', c: null, d: 3, k: 20, p: 19}
+];
+const TA_POOL = ['p10', 'p1', 'p5', 'p2030', 'p25', 'pswap', 'wari', 'kirine', 'otsuri', 'warikan', 'x5', 'x9', 'x25', 'x11', 'zeikomi', 'spoon'];
+
+// ---------- 保存 ----------
+function blank() { return {st: {}, read: {}, rev: {}, days: {}, rank: -1, ta: {1: 0, 2: 0}, tot: {ok: 0, ng: 0}, dayok: {}}; }
+let S = blank();
+try {
+  const raw = JSON.parse(localStorage.getItem(KEY) || 'null');
+  if (raw && typeof raw === 'object') S = Object.assign(blank(), raw);
+} catch (e) { S = blank(); }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { alert('記録を保存できませんでした'); } }
+
+// ---------- 小道具 ----------
+function h(s) { return String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c])); }
+function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function today() { return ymd(new Date()); }
+function addDays(n) { const d = new Date(); d.setDate(d.getDate() + n); return ymd(d); }
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function st(id) { return S.st[id] || (S.st[id] = {ok: 0, ng: 0, tm: 0}); }
+function dOf(id) { const o = S.st[id]?.ok || 0; return o < 3 ? 1 : o < 8 ? 2 : 3; }
+function level(id) {
+  const s = S.st[id] || {ok: 0};
+  let l = S.read[id] ? 1 : 0;
+  if (s.ok >= 3) l = 2;
+  if (s.ok >= 8) l = 3;
+  if (s.ok >= 8 && (S.rev[id]?.st || 0) >= 4) l = 4;
+  return l;
+}
+const LV_NAME = ['まだ', '読んだ', 'できた', '速くなった', '身についた'];
+function stars(l) { return '<span class="stars">' + '★'.repeat(l) + '☆'.repeat(4 - l) + '</span>'; }
+function rankName() { return S.rank >= 0 ? RANKS[S.rank].n : '無級'; }
+function streak() {
+  let n = 0; const d = new Date();
+  if (!S.days[ymd(d)]) d.setDate(d.getDate() - 1);
+  while (S.days[ymd(d)]) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function dueList() { const t = today(); return TIPS.filter(x => S.rev[x.id] && S.rev[x.id].next <= t); }
+function weakList() { return TIPS.filter(x => { const s = S.st[x.id]; return s && s.ng > 0 && s.ng >= s.ok / 2; }); }
+function parseNum(s) {
+  s = String(s).replace(/[０-９．－＋]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[，,、\s]/g, '').replace(/[−ー–]/g, '-');
+  const m = s.match(/-?\d+(\.\d+)?/);
+  if (!m) return null;
+  let v = parseFloat(m[0]);
+  if (s.slice(m.index + m[0].length).startsWith('万')) v *= 10000;
+  return v;
+}
+function grade(p, v) {
+  const tol = p.tol || 0, diff = Math.abs(v - p.a);
+  if (diff <= tol + 1e-6 || Math.abs(r2(v) - r2(p.a)) < 1e-6) return 'ok';
+  if (diff <= Math.max(tol * 2.5, Math.abs(p.a) * 0.1)) return 'near';
+  return 'ng';
+}
+function record(id, ok, secs, isRev) {
+  const s = st(id);
+  if (ok) { s.ok++; s.tm += Math.min(secs, 120); S.tot.ok++; S.dayok[today()] = (S.dayok[today()] || 0) + 1; }
+  else { s.ng++; S.tot.ng++; }
+  S.read[id] = true;
+  S.days[today()] = true;
+  const rv = S.rev[id];
+  if (!rv) { if (ok) S.rev[id] = {st: 0, next: addDays(1)}; }
+  else if (isRev) {
+    if (ok) { rv.st++; rv.next = addDays(IV[Math.min(rv.st, IV.length - 1)]); }
+    else { rv.st = Math.max(0, rv.st - 1); rv.next = addDays(1); }
+  } else if (!ok && rv.next > addDays(1)) rv.next = addDays(1);
+  const keys = Object.keys(S.dayok).sort();
+  while (keys.length > 400) delete S.dayok[keys.shift()];
+  save();
+}
+function avgSec(id) { const s = S.st[id]; return s && s.ok ? Math.round(s.tm / s.ok) : null; }
+const app = document.getElementById('app');
+const SCREENS = {};
+let TIMER = null;
+function go(screen, arg) {
+  if (TIMER) { clearInterval(TIMER); TIMER = null; }
+  window.scrollTo(0, 0);
+  (SCREENS[screen] || SCREENS.home)(arg);
+}
+
+// ---------- ホーム ----------
+SCREENS.home = function () {
+  const got = TIPS.filter(t => level(t.id) >= 2).length;
+  const due = dueList().length, weak = weakList().length;
+  const must = TIPS.filter(t => t.must);
+  const mustGot = must.filter(t => level(t.id) >= 2).length;
+  app.innerHTML = `
+  <div class="card">
+    <div class="row"><span class="rank">${rankName()}</span>
+      <span>今日の正解 <b>${S.dayok[today()] || 0}</b>問</span>
+      <span>連続 <b>${streak()}</b>日</span>
+      <span>できたコツ <b>${got}</b> / ${TIPS.length}</span></div>
+    <div class="bar" style="margin-top:8px"><div style="width:${Math.round(got / TIPS.length * 100)}%"></div></div>
+    <p class="muted" style="margin:8px 0 0">紙や電卓は使わずに、頭の中だけで解いてみよう。答えが近ければ「ざっくり正解」になる問題もあるよ。</p>
+    ${phoneNotes()}
+  </div>
+  <div class="grid">
+    <button class="btn big" onclick="startToday()"><b>▶ 今日の10問</b><small>復習・苦手・新しいコツをまぜて出すよ</small></button>
+    <button class="btn" onclick="go('must')"><b>⭐ 絶対おぼえたい${must.length}</b><small>できた ${mustGot} / ${must.length}</small></button>
+    <button class="btn" onclick="startReview()"><b>🔁 今日の復習</b><small>${due ? due + '個のコツが復習の日' : '今日はなし'}</small></button>
+    <button class="btn" onclick="startWeak()"><b>💪 苦手を練習</b><small>${weak ? weak + '個' : 'まだなし'}</small></button>
+  </div>
+  <div class="sec">ジャンル別に練習</div>
+  <div class="grid">${CATS.map(c => {
+    const ts = TIPS.filter(t => t.cat === c.id), g = ts.filter(t => level(t.id) >= 2).length;
+    return `<button class="btn" onclick="go('cat','${c.id}')"><b>${c.icon} ${c.n}</b><small>${h(c.d)}<br>できた ${g} / ${ts.length}</small></button>`;
+  }).join('')}</div>
+  <div class="sec">腕だめし</div>
+  <div class="grid">
+    <button class="btn" onclick="go('ta')"><b>⏱ 60秒タイムアタック</b><small>最高記録 やさしい${S.ta[1] || 0}問・ふつう${S.ta[2] || 0}問</small></button>
+    <button class="btn" onclick="go('exam')"><b>🥋 昇段試験</b><small>今は ${rankName()}</small></button>
+  </div>
+  <div class="sec">道具</div>
+  <div class="grid">
+    <button class="btn" onclick="go('zukan')"><b>📖 コツ図鑑</b><small>全${TIPS.length}個のコツを読む</small></button>
+    <button class="btn" onclick="go('hayami')"><b>📋 早見表</b><small>覚えておくと速い数字の一覧</small></button>
+    <button class="btn" onclick="go('calc')"><b>🧾 答え合わせ計算機</b><small>転売・料理・同人・くじの計算</small></button>
+    <button class="btn" onclick="go('kiroku')"><b>📊 記録</b><small>コツごとの成績・控え</small></button>
+  </div>`;
+};
+
+// ---------- 出題の組み立て ----------
+function pickFrom(tips, n, dFix) {
+  const out = []; let pool = [];
+  while (out.length < n && tips.length) {
+    if (!pool.length) pool = shuffle(tips);
+    const t = pool.pop();
+    out.push({id: t.id, d: dFix || dOf(t.id)});
+  }
+  return out;
+}
+function startToday() {
+  const t = today();
+  const due = shuffle(dueList()).slice(0, 4).map(x => ({id: x.id, d: dOf(x.id), rev: true}));
+  const used = new Set(due.map(x => x.id));
+  const weak = shuffle(weakList().filter(x => !used.has(x.id))).slice(0, 2);
+  weak.forEach(x => used.add(x.id));
+  const fresh = TIPS.filter(x => !S.read[x.id] && !used.has(x.id)).sort((a, b) => (b.must ? 1 : 0) - (a.must ? 1 : 0)).slice(0, 2);
+  fresh.forEach(x => used.add(x.id));
+  let items = due.concat(pickFrom(weak, weak.length), pickFrom(fresh, fresh.length));
+  const readTips = TIPS.filter(x => S.read[x.id] && !used.has(x.id));
+  const restPool = readTips.length >= 4 ? readTips : TIPS.filter(x => x.must && !used.has(x.id));
+  items = items.concat(pickFrom(restPool, 10 - items.length));
+  startQuiz(shuffle(items), '今日の10問', 'today');
+}
+function startReview() {
+  const due = dueList();
+  if (!due.length) { alert('今日の復習はありません。ほかの練習をしてみよう'); return; }
+  startQuiz(shuffle(due).slice(0, 15).map(x => ({id: x.id, d: dOf(x.id), rev: true})), '今日の復習', 'rev');
+}
+function startWeak() {
+  const w = weakList();
+  if (!w.length) { alert('苦手はまだありません。いい調子！'); return; }
+  startQuiz(pickFrom(w, 10), '苦手を練習', 'weak');
+}
+function startTip(id, d) { startQuiz(pickFrom([BY[id]], 5, d), BY[id].t, 'tip'); }
+
+// ---------- 出題画面 ----------
+let Q = null;
+function startQuiz(items, title, mode, extra) {
+  Q = Object.assign({items, i: 0, ok: 0, title, mode, res: []}, extra || {});
+  nextQ();
+}
+function makeProblem(it) {
+  try { return BY[it.id].gen(it.d); } catch (e) { console.error(e); return {q: '(問題を作れませんでした。次へ進んでね)', a: 0, ex: ''}; }
+}
+function nextQ() {
+  if (!Q) return go('home');
+  if (Q.i >= Q.items.length) return endQuiz();
+  const it = Q.items[Q.i], tip = BY[it.id];
+  const isNew = !S.read[it.id];
+  if (isNew) { S.read[it.id] = true; save(); }
+  Q.cur = {it, tip, p: makeProblem(it), done: false, isNew};
+  Q.t0 = Date.now();
+  renderQ();
+}
+function renderQ() {
+  const {tip, p, isNew, it} = Q.cur;
+  const c = CBY[tip.cat];
+  const tolTxt = p.z ? `<span class="tag z">ざっくりでOK</span>` : '';
+  app.innerHTML = `
+  <div class="card">
+    <div class="row"><b>${h(Q.title)}</b><span class="sp"></span><span class="muted">${Q.i + 1} / ${Q.items.length}問</span></div>
+    <div class="bar" style="margin-top:6px"><div style="width:${Math.round(Q.i / Q.items.length * 100)}%"></div></div>
+  </div>
+  <div class="card" id="qcard">
+    <div><span class="tag">${c.icon} ${c.n}</span>${it.rev ? '<span class="tag">復習</span>' : ''}${tolTxt}<span class="muted">${h(tip.t)}</span></div>
+    ${isNew ? `<div class="hint"><b>🌱 新しいコツ</b><div class="rule">${h(tip.rule)}</div><div class="muted">例: ${tip.ex.map(h).join(' ／ ')}</div></div>` : ''}
+    <div class="q">${h(p.q)}</div>
+    ${p.ch ? p.ch.map((x, i) => `<button class="choice" id="ch${i}" onclick="answerChoice(${i})">${h(x)}</button>`).join('')
+      : `<div class="ans-row"><input id="ans" inputmode="decimal" autocomplete="off" placeholder="答え"><span class="unit">${h(p.u || '')}</span>
+         ${p.neg ? '<button class="sub-btn" onclick="toggleNeg()">±(マイナス)</button>' : ''}
+         <button class="main-btn" onclick="answerInput()">答える</button></div>`}
+    <div class="row" style="margin-top:10px">
+      ${isNew ? '' : `<button class="sub-btn" onclick="showHint()">💡 コツを見る</button>`}
+      <button class="sub-btn" onclick="giveUp()">わからない</button>
+    </div>
+    <div id="hintbox"></div>
+    <div id="resbox"></div>
+  </div>`;
+  const inp = document.getElementById('ans');
+  if (inp) {
+    inp.focus();
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); if (!Q.cur.done) answerInput(); } });
+  }
+}
+// スマホの数字キーボードには「−」が無いので、ボタンで付け外しする
+function toggleNeg() {
+  const inp = document.getElementById('ans'); if (!inp || Q.cur.done) return;
+  inp.value = inp.value.startsWith('-') ? inp.value.slice(1) : '-' + inp.value;
+  inp.focus();
+}
+function showHint() {
+  const t = Q.cur.tip;
+  document.getElementById('hintbox').innerHTML = `<div class="hint"><div class="rule">${h(t.rule)}</div><div class="muted">例: ${t.ex.map(h).join(' ／ ')}</div></div>`;
+  Q.cur.hinted = true;
+  const inp = document.getElementById('ans'); if (inp) inp.focus();
+}
+function answerInput() {
+  if (Q.cur.done) return;
+  const inp = document.getElementById('ans');
+  const v = parseNum(inp.value);
+  if (v === null) { inp.focus(); inp.placeholder = '数字を入れてね'; return; }
+  finish(grade(Q.cur.p, v), inp.value);
+}
+function answerChoice(i) {
+  if (Q.cur.done) return;
+  const p = Q.cur.p;
+  document.getElementById('ch' + i).classList.add(i === p.a ? 'ok' : 'ng');
+  document.getElementById('ch' + p.a).classList.add('ok');
+  p.ch.forEach((_, j) => document.getElementById('ch' + j).disabled = true);
+  finish(i === p.a ? 'ok' : 'ng', p.ch[i]);
+}
+function giveUp() { if (!Q.cur.done) finish('ng', '(わからない)'); }
+function finish(g, your) {
+  const cur = Q.cur; cur.done = true;
+  const secs = Math.round((Date.now() - Q.t0) / 1000);
+  const ok = g === 'ok';
+  record(cur.it.id, ok, secs, !!cur.it.rev);
+  if (ok) Q.ok++;
+  const p = cur.p;
+  const ansTxt = p.ch ? p.ch[p.a] : `${F(p.a)}${p.u || ''}`;
+  Q.res.push({q: p.q, your, ans: ansTxt, g, ex: p.ex, id: cur.it.id});
+  const inp = document.getElementById('ans'); if (inp) inp.readOnly = true;
+  const line = ok ? P(OK_LINES) + (secs <= 10 ? ' はやい！' : '') : g === 'near' ? P(NEAR_LINES) : P(NG_LINES);
+  const last = Q.i + 1 >= Q.items.length;
+  document.getElementById('resbox').innerHTML = `
+    <div class="res ${g}">
+      <div class="big">${ok ? '⭕ ' : g === 'near' ? '🔶 ' : '✏️ '}${h(line)}</div>
+      <div>答え: <b>${h(ansTxt)}</b>${p.z && ok ? '(ざっくり正解)' : ''}　<span class="muted">${secs}秒</span></div>
+      <div class="how">${h(p.ex)}</div>
+    </div>
+    <button class="main-btn" id="nextbtn" style="margin-top:10px" onclick="Q.i++;nextQ()">${last ? '結果を見る' : '次の問題 ▶'}</button>
+    <span class="muted pc-only">(Enterキーでも進めます)</span>`;
+  document.getElementById('nextbtn').focus();
+}
+function endQuiz() {
+  const q = Q, n = q.items.length;
+  let extra = '';
+  if (q.mode === 'exam') {
+    const rk = RANKS[q.rank], pass = q.ok >= rk.p;
+    if (pass && S.rank < q.rank) { S.rank = q.rank; save(); }
+    extra = pass ? `<div class="res ok"><div class="big">🎉 合格！ ${rk.n} になりました</div></div>` : `<div class="res near"><div class="big">あと${rk.p - q.ok}問で合格！ 苦手なコツを練習してから、また挑戦しよう</div></div>`;
+  }
+  const miss = q.res.filter(r => r.g !== 'ok');
+  app.innerHTML = `
+  <div class="card">
+    <h2>${h(q.title)} おつかれさま！</h2>
+    <p style="font-size:22px"><b>${q.ok}</b> / ${n}問 正解</p>
+    ${extra}
+    <div class="row" style="margin-top:8px">
+      <button class="main-btn" onclick="go('home')">ホームへ</button>
+      <button class="sub-btn" onclick="startQuiz(Q.items.map(x=>Object.assign({},x)),Q.title,Q.mode,Q.mode==='exam'?{rank:Q.rank}:null)">同じ内容でもう一回</button>
+    </div>
+  </div>
+  ${miss.length ? `<div class="sec">見直し(${miss.length}問)</div>` + miss.map(r => `
+    <div class="card"><div class="muted">${h(BY[r.id].t)}</div><div style="white-space:pre-wrap;font-weight:bold">${h(r.q)}</div>
+    <div>あなた: ${h(r.your)} → 答え: <b>${h(r.ans)}</b></div><div class="how">${h(r.ex)}</div>
+    <button class="sub-btn" onclick="go('tip','${r.id}')">このコツを読む</button></div>`).join('') : '<div class="card">全問正解！ すばらしい 🎉</div>'}`;
+}
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.isComposing) return;
+  const nb = document.getElementById('nextbtn');
+  if (nb && document.activeElement !== nb && Q && Q.cur && Q.cur.done) { e.preventDefault(); nb.click(); }
+});
+
+// ---------- 絶対おぼえたい ----------
+SCREENS.must = function () {
+  const ms = TIPS.filter(t => t.must);
+  app.innerHTML = `<div class="card"><h2>⭐ 絶対おぼえたい${ms.length}</h2>
+    <p class="muted">ふだんの買い物・お金・転売・同人・料理で、知っているだけで得をする計算です。上から順に★2つ(できた)を目指そう。</p>
+    <button class="main-btn" onclick="startQuiz(pickFrom(TIPS.filter(t=>t.must),10),'絶対おぼえたい','must')">この中から10問</button></div>
+    ${tipList(ms)}`;
+};
+function tipList(ts) {
+  return `<div class="card"><table>${ts.map(t => `<tr style="cursor:pointer" onclick="go('tip','${t.id}')">
+    <td>${CBY[t.cat].icon}</td><td><b>${h(t.t)}</b></td><td>${stars(level(t.id))}</td></tr>`).join('')}</table></div>`;
+}
+
+// ---------- ジャンル ----------
+let CAT_D = 0;
+SCREENS.cat = function (cid) {
+  const c = CBY[cid], ts = TIPS.filter(t => t.cat === cid);
+  const ds = [['おまかせ', 0], ['やさしい', 1], ['ふつう', 2], ['むずかしい', 3]];
+  app.innerHTML = `<div class="card"><h2>${c.icon} ${c.n}</h2><p class="muted">${h(c.d)}</p>
+    <div class="row">${ds.map(([n, v]) => `<button class="sub-btn ${CAT_D === v ? 'on' : ''}" onclick="CAT_D=${v};go('cat','${cid}')">${n}</button>`).join('')}</div>
+    <p class="muted" style="margin:4px 0">おまかせは、正解した回数に合わせて少しずつ難しくなるよ。</p>
+    <button class="main-btn" onclick="startQuiz(pickFrom(TIPS.filter(t=>t.cat==='${cid}'),10,CAT_D||0),'${c.n}','cat')">10問やる</button></div>
+    ${tipList(ts)}`;
+};
+
+// ---------- コツ ----------
+SCREENS.zukan = function () {
+  app.innerHTML = `<div class="card"><h2>📖 コツ図鑑</h2><p class="muted">タップすると、くわしい説明と練習ができます。<span class="tag must">必須</span>は絶対おぼえたいコツ。</p></div>` +
+    CATS.map(c => `<div class="sec">${c.icon} ${c.n}</div><div class="card"><table>${TIPS.filter(t => t.cat === c.id).map(t => `
+      <tr style="cursor:pointer" onclick="go('tip','${t.id}')"><td><b>${h(t.t)}</b> ${t.must ? '<span class="tag must">必須</span>' : ''}</td><td>${stars(level(t.id))}</td></tr>`).join('')}</table></div>`).join('');
+};
+SCREENS.tip = function (id) {
+  const t = BY[id], s = S.st[id] || {ok: 0, ng: 0}, c = CBY[t.cat], lv = level(id), av = avgSec(id);
+  if (!S.read[id]) { S.read[id] = true; save(); }
+  let sample = null; try { sample = t.gen(dOf(id)); } catch (e) {}
+  app.innerHTML = `<div class="card">
+    <div><span class="tag">${c.icon} ${c.n}</span>${t.must ? '<span class="tag must">絶対おぼえたい</span>' : ''}</div>
+    <h2>${h(t.t)}</h2>
+    <div class="rule">${h(t.rule)}</div>
+    <h3>例</h3><ul>${t.ex.map(x => `<li>${h(x)}</li>`).join('')}</ul>
+    <h3>どこで役に立つ？</h3><p>${h(t.use)}</p>
+    ${sample ? `<h3>こんな問題が出るよ</h3><div class="how"><b>${h(sample.q)}</b>\n\n${h(sample.ex)}</div>` : ''}
+    <p>${stars(lv)} ${LV_NAME[lv]}　<span class="muted">正解${s.ok}回・まちがい${s.ng}回${av !== null ? `・平均${av}秒` : ''}</span></p>
+    <div class="row">
+      <button class="main-btn" onclick="startTip('${id}')">このコツで5問</button>
+      <button class="sub-btn" onclick="startTip('${id}',1)">やさしい</button>
+      <button class="sub-btn" onclick="startTip('${id}',2)">ふつう</button>
+      <button class="sub-btn" onclick="startTip('${id}',3)">むずかしい</button>
+    </div>
+    <p class="muted">★1 読んだ → ★2 3回正解 → ★3 8回正解 → ★4 復習で4回続けて正解</p>
+  </div>`;
+};
+
+// ---------- タイムアタック ----------
+let TA = null;
+SCREENS.ta = function () {
+  app.innerHTML = `<div class="card"><h2>⏱ 60秒タイムアタック</h2>
+    <p>60秒で何問とけるか挑戦！ ％・割引・おつり・かけ算のコツから出ます。正解したらすぐ次の問題へ。</p>
+    <p>最高記録: やさしい <b>${S.ta[1] || 0}</b>問 ／ ふつう <b>${S.ta[2] || 0}</b>問</p>
+    <button class="main-btn" onclick="taStart(1)">やさしいで始める</button>
+    <button class="main-btn" onclick="taStart(2)">ふつうで始める</button></div>`;
+};
+function taStart(d) {
+  TA = {d, n: 0, miss: 0, end: Date.now() + 60000, last: ''};
+  app.innerHTML = `<div class="card"><div class="timer" id="tat">60</div><div class="row"><span>正解 <b id="tan">0</b>問</span><span class="sp"></span><span class="muted" id="talast"></span></div></div>
+    <div class="card" id="taq"></div>`;
+  taNext();
+  TIMER = setInterval(() => {
+    const left = Math.max(0, Math.ceil((TA.end - Date.now()) / 1000));
+    const el = document.getElementById('tat'); if (el) el.textContent = left;
+    if (left <= 0) taEnd();
+  }, 200);
+}
+function taNext() {
+  const id = P(TA_POOL);
+  TA.cur = {id, p: makeProblem({id, d: TA.d}), t0: Date.now()};
+  const p = TA.cur.p;
+  document.getElementById('taq').innerHTML = `<div class="q">${h(p.q)}</div>
+    <div class="ans-row"><input id="taa" inputmode="decimal" autocomplete="off"><span class="unit">${h(p.u || '')}</span>
+    <button class="main-btn" onclick="taAns()">答える</button><button class="sub-btn" onclick="taAns(true)">パス</button></div>`;
+  const inp = document.getElementById('taa');
+  inp.focus();
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); taAns(); } });
+}
+function taAns(pass) {
+  if (!TA || Date.now() > TA.end) return;
+  const inp = document.getElementById('taa'), p = TA.cur.p;
+  const v = pass ? null : parseNum(inp.value);
+  if (!pass && v === null) return;
+  const ok = !pass && grade(p, v) === 'ok';
+  record(TA.cur.id, ok, Math.round((Date.now() - TA.cur.t0) / 1000), false);
+  const card = document.getElementById('taq');
+  card.classList.remove('flash-ok', 'flash-ng'); void card.offsetWidth;
+  card.classList.add(ok ? 'flash-ok' : 'flash-ng');
+  if (ok) TA.n++; else TA.miss++;
+  document.getElementById('tan').textContent = TA.n;
+  document.getElementById('talast').textContent = ok ? '⭕ 正解！' : `前の問題の答え: ${F(p.a)}${p.u || ''}`;
+  taNext();
+}
+function taEnd() {
+  clearInterval(TIMER); TIMER = null;
+  const best = S.ta[TA.d] || 0, nb = TA.n > best;
+  if (nb) { S.ta[TA.d] = TA.n; save(); }
+  app.innerHTML = `<div class="card"><h2>⏱ 終了！</h2><p style="font-size:24px">正解 <b>${TA.n}</b>問</p>
+    ${nb ? '<div class="res ok"><div class="big">🎉 最高記録を更新！</div></div>' : `<p>最高記録は ${best}問。あと${best - TA.n + 1}問で更新だよ</p>`}
+    <button class="main-btn" onclick="taStart(${TA.d})">もう一回</button><button class="sub-btn" onclick="go('home')">ホームへ</button></div>`;
+}
+
+// ---------- 昇段試験 ----------
+SCREENS.exam = function () {
+  app.innerHTML = `<div class="card"><h2>🥋 昇段試験</h2><p>今は <span class="rank">${rankName()}</span>　次の段位に挑戦できます。合格した段位はもう一度受けることもできます。</p></div>
+  <div class="card"><table>${RANKS.map((r, i) => {
+    const cats = r.c ? r.c.length >= CATS.length ? '全ジャンル' : r.c.map(c => CBY[c].n).join('・') : '全ジャンル';
+    const can = i <= S.rank + 1;
+    return `<tr><td><b>${r.n}</b></td><td>${cats}<br><span class="muted">${['', 'やさしい', 'ふつう', 'むずかしい'][r.d]}・${r.k}問中${r.p}問で合格</span></td>
+      <td>${i <= S.rank ? '✅ 合格' : can ? `<button class="main-btn" onclick="startExam(${i})">受ける</button>` : '<span class="muted">🔒</span>'}</td></tr>`;
+  }).join('')}</table></div>`;
+};
+function startExam(i) {
+  const r = RANKS[i];
+  const ts = TIPS.filter(t => !r.c || r.c.includes(t.cat));
+  startQuiz(pickFrom(ts, r.k, r.d), r.n + ' 昇段試験', 'exam', {rank: i});
+}
+
+// ---------- 早見表 ----------
+SCREENS.hayami = function () {
+  const tb = (head, rows) => `<table><tr>${head.map(x => `<th>${x}</th>`).join('')}</tr>${rows.map(r => `<tr>${r.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</table>`;
+  app.innerHTML = `<div class="card"><h2>📋 早見表</h2><p class="muted">ここの数字を覚えておくと、暗算がぐっと速くなります。料理の数字は一般的な目安です。</p></div>
+  <div class="sec">分数と％</div><div class="card">${tb(['分数', '％'], [['1/2', '50％'], ['1/3', '約33％'], ['1/4', '25％'], ['1/5', '20％'], ['1/8', '12.5％'], ['1/10', '10％'], ['1/20', '5％'], ['3/4', '75％']])}</div>
+  <div class="sec">割引・税・手数料の「かける数」</div><div class="card">${tb(['こうしたい', 'かける・割る'], [['1割引き / 手数料10％を引く', '×0.9'], ['2割引き', '×0.8'], ['3割引き', '×0.7'], ['半額', '×0.5'], ['税込み(10％)', '×1.1'], ['税込み(8％)', '×1.08'], ['税込みから税抜き(10％)', '÷1.1(税は11分の1)'], ['手取りから売値を逆算(手数料10％)', '÷0.9 ≒ ×1.11'], ['利益率20％の売値', '仕入れ÷0.8 ＝ ×1.25'], ['利益率30％の売値', '仕入れ÷0.7 ≒ ×1.43'], ['利益率50％の売値', '仕入れ×2']])}</div>
+  <div class="sec">お金</div><div class="card">${tb(['覚えること', '中身'], [['72の法則', '72÷年利＝2倍になる年数(年3％→24年、年6％→12年、年18％の借金→4年)'], ['年利→月利', '÷12(年15％→月1.25％、年18％→月1.5％)'], ['年収→時給', '年収(万円)×5(1年2,000時間として)'], ['同じ％の上下', 'p％上がってp％下がると、p×p÷100％減る(50％なら25％減)'], ['ポイント還元', 'r％還元 ＝ 実質 r÷(100＋r)％引き(10％→約9.1％、20％→約16.7％)'], ['電気代', 'W÷1000×時間×1kWhの値段(例: 31円)']])}</div>
+  <div class="sec">ガチャ・抽選(1回以上当たる確率)</div><div class="card">${tb(['確率×回数(平均の当たり数)', '1回以上当たる確率'], [['0.5', '約39％'], ['1(例: 1％を100回)', '約63％'], ['2', '約86％'], ['3', '約95％']])}</div>
+  <div class="sec">料理: 塩分のめやす</div><div class="card">${tb(['料理', '材料・汁の重さに対する塩分'], [['肉・魚の下味', '0.8〜1％'], ['汁物(みそ汁・スープ)', '0.6〜0.8％'], ['煮物', '1％前後(1〜1.5％)'], ['パスタのゆで水', '約1％(水2Lに塩20g)'], ['浅漬け', '約2％']])}</div>
+  <div class="sec">料理: 塩を置きかえると</div><div class="card">${tb(['調味料', '塩分', '塩1gぶんの量'], [['こいくちしょうゆ', '約15％', '約6.7g(小さじ1ちょっと)'], ['減塩しょうゆ', '約8％', '約12g'], ['みそ', '約12〜13％(種類で違う)', '約8g']])}</div>
+  <div class="sec">料理: 大さじ・小さじの重さ(目安)</div><div class="card">${tb(['調味料', '小さじ1(5ml)', '大さじ1(15ml)'], [['塩・しょうゆ・みそ・みりん', '6g', '18g'], ['水・酒・酢', '5g', '15g'], ['油', '4g', '12g'], ['砂糖(上白糖)', '3g', '9g']])}</div>
+  <div class="sec">時間・きょり</div><div class="card">${tb(['覚えること', '中身'], [['時速60km', '1分で1km'], ['時速4km(歩き)', '1分で約67m'], ['不動産の「徒歩1分」', '道のり80m(端数は切り上げ)']])}</div>`;
+};
+
+// ---------- 答え合わせ計算機 ----------
+SCREENS.calc = function () {
+  app.innerHTML = `<div class="card"><h2>🧾 答え合わせ計算機</h2><p class="muted">暗算した答えが合っているか確かめる用。まず頭で出してから入れてみよう。</p></div>
+  <div class="sec">📦 転売</div><div class="card calc">
+    <label><span>売値(円)</span><input inputmode="decimal" id="t_p" value="8000" oninput="cT()"></label>
+    <label><span>仕入れ値(円)</span><input inputmode="decimal" id="t_c" value="5000" oninput="cT()"></label>
+    <label><span>手数料(％)</span><input inputmode="decimal" id="t_f" value="10" oninput="cT()"></label>
+    <label><span>送料(円)</span><input inputmode="decimal" id="t_s" value="750" oninput="cT()"></label>
+    <label><span>交通費など(円)</span><input inputmode="decimal" id="t_e" value="0" oninput="cT()"></label>
+    <div class="out" id="t_o"></div></div>
+  <div class="sec">🍳 料理の塩</div><div class="card calc">
+    <label><span>材料・汁の重さ(g)</span><input inputmode="decimal" id="r_g" value="300" oninput="cR()"></label>
+    <label><span>塩分(％)</span><input inputmode="decimal" id="r_p" value="0.8" oninput="cR()"></label>
+    <div class="out" id="r_o"></div></div>
+  <div class="sec">📕 同人</div><div class="card calc">
+    <label><span>値段(円)</span><input inputmode="decimal" id="d_p" value="1100" oninput="cD()"></label>
+    <label><span>取り分(％)</span><input inputmode="decimal" id="d_r" value="50" oninput="cD()"></label>
+    <label><span>売れた本数</span><input inputmode="decimal" id="d_n" value="100" oninput="cD()"></label>
+    <label><span>制作時間(時間)</span><input inputmode="decimal" id="d_h" value="30" oninput="cD()"></label>
+    <label><span>セール(％オフ)</span><input inputmode="decimal" id="d_s" value="50" oninput="cD()"></label>
+    <div class="out" id="d_o"></div></div>
+  <div class="sec">🎰 くじの期待値</div><div class="card calc">
+    <label><span>1回の値段(円)</span><input inputmode="decimal" id="k_p" value="800" oninput="cK()"></label>
+    <label><span>全部の本数</span><input inputmode="decimal" id="k_n" value="80" oninput="cK()"></label>
+    <p class="muted">賞ごとに「本数」と「相場(円)」を入れてね(使わない行は0のまま)</p>
+    ${[0, 1, 2, 3, 4].map(i => `<label><span>賞${'ABCDE'[i]}</span><input inputmode="decimal" id="k_c${i}" value="${[2, 4, 0, 0, 74][i]}" oninput="cK()" style="width:80px">本 × <input inputmode="decimal" id="k_v${i}" value="${[12000, 5000, 0, 0, 600][i]}" oninput="cK()">円</label>`).join('')}
+    <label><span>ラストワン相場(円)</span><input inputmode="decimal" id="k_l" value="0" oninput="cK()"></label>
+    <div class="out" id="k_o"></div></div>`;
+  cT(); cR(); cD(); cK();
+};
+function nv(id) { const v = parseNum(document.getElementById(id).value); return v === null ? 0 : v; }
+function cT() {
+  const p = nv('t_p'), c = nv('t_c'), f = nv('t_f'), s = nv('t_s'), e = nv('t_e');
+  const ted = p * (1 - f / 100) - s, pr = ted - c - e, bep = f < 100 ? (c + s + e) / (1 - f / 100) : 0;
+  document.getElementById('t_o').innerHTML = `手取り <b>${F(ted)}円</b>　利益 <b>${F(pr)}円</b><br>
+    仕入れに対して ${c ? F(pr / c * 100) : '-'}％ ／ 売値に対して ${p ? F(pr / p * 100) : '-'}％<br>赤字にならない売値 <b>${F(Math.ceil(bep))}円</b>`;
+}
+function cR() {
+  const g = nv('r_g'), p = nv('r_p'), s = g * p / 100;
+  document.getElementById('r_o').innerHTML = `塩 <b>${F(s)}g</b>(小さじ約${F(s / 6)}杯)<br>しょうゆなら <b>約${F(s / 0.15)}g</b>(大さじ約${F(s / 0.15 / 18)}杯)<br>みそなら <b>約${F(s * 8)}g</b>(大さじ約${F(s * 8 / 18)}杯)`;
+}
+function cD() {
+  const p = nv('d_p'), r = nv('d_r'), n = nv('d_n'), hh = nv('d_h'), sl = nv('d_s');
+  const one = p * r / 100, tot = one * n, sone = p * (1 - sl / 100) * r / 100;
+  document.getElementById('d_o').innerHTML = `1本の手取り <b>${F(one)}円</b>　合計 <b>${F(tot)}円</b><br>作品の時給 ${hh ? `<b>${F(tot / hh)}円</b>` : '-'}<br>
+    セール中の1本の手取り ${F(sone)}円 → 今と同じ売上には本数が <b>${sone ? F(one / sone) : '-'}倍</b> 必要`;
+}
+function cK() {
+  const p = nv('k_p'), n = nv('k_n');
+  let sum = 0, cnt = 0;
+  for (let i = 0; i < 5; i++) { sum += nv('k_c' + i) * nv('k_v' + i); cnt += nv('k_c' + i); }
+  const ev = n ? sum / n : 0, all = sum + nv('k_l');
+  document.getElementById('k_o').innerHTML = `1回の期待値 <b>${F(ev)}円</b>(1回${F(p)}円 → ${ev >= p ? '期待値は得' : '期待値は損'})<br>
+    全部買うと ${F(p * n)}円 → 相場の合計(ラストワン込み) ${F(all)}円 → 差 <b>${F(all - p * n)}円</b>
+    ${cnt !== n ? `<br><span class="muted">※賞の本数の合計(${F(cnt)})が全部の本数(${F(n)})と合っていません</span>` : ''}<br>
+    <span class="muted">売る時の手数料・送料・手間は入っていません</span>`;
+}
+
+// ---------- 記録 ----------
+SCREENS.kiroku = function () {
+  const tot = S.tot.ok + S.tot.ng;
+  app.innerHTML = `<div class="card"><h2>📊 記録</h2>
+    <p>段位 <span class="rank">${rankName()}</span>　これまで <b>${tot}</b>問(正解${S.tot.ok}問・${tot ? Math.round(S.tot.ok / tot * 100) : 0}％)　連続 <b>${streak()}</b>日</p></div>
+  ${CATS.map(c => {
+    const ts = TIPS.filter(t => t.cat === c.id);
+    return `<div class="sec">${c.icon} ${c.n}</div><div class="card"><table><tr><th>コツ</th><th>習得</th><th>正解</th><th>まちがい</th><th>平均</th></tr>
+    ${ts.map(t => { const s = S.st[t.id] || {ok: 0, ng: 0}, av = avgSec(t.id); return `<tr style="cursor:pointer" onclick="go('tip','${t.id}')"><td>${h(t.t)}</td><td>${stars(level(t.id))}</td><td>${s.ok}</td><td>${s.ng}</td><td>${av !== null ? av + '秒' : '-'}</td></tr>`; }).join('')}</table></div>`;
+  }).join('')}
+  <div class="sec">記録の控え</div><div class="card">
+    <p class="muted">記録はこのPCのブラウザ(Edge)に保存されています。念のため、下の「控えを作る」で出た文字をメモ帳などに保存しておくと安心です。</p>
+    <button class="sub-btn" onclick="document.getElementById('bk').value=JSON.stringify(S)">控えを作る</button>
+    <button class="sub-btn" onclick="restore()">控えから戻す</button>
+    <textarea id="bk" placeholder="ここに控えが出ます(戻す時はここに貼りつけてから「控えから戻す」)"></textarea></div>`;
+};
+function restore() {
+  const t = document.getElementById('bk').value.trim();
+  if (!t) { alert('控えの文字を貼りつけてください'); return; }
+  try {
+    const o = JSON.parse(t);
+    if (!o || typeof o !== 'object' || !o.st) throw new Error();
+    if (!confirm('今の記録を、貼りつけた控えで上書きします。よいですか？')) return;
+    S = Object.assign(blank(), o); save(); alert('戻しました'); go('kiroku');
+  } catch (e) { alert('控えの形がちがうようです。全部コピーできているか確かめてね'); }
+}
+
+// ===== スマホで電波なしでも動くようにする(ネット上で開いた時だけ。PCのファイル版では何もしない) =====
+const ON_WEB = location.protocol.startsWith('http');
+let SW_READY = false;
+function phoneNotes() {
+  if (!ON_WEB) return '';
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const standalone = window.navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  let s = '';
+  if (ios && !standalone) s += `<div class="note">📌 Safariのまま使うと、しばらく開かない日が続いた時に記録が消えることがあります。下の「共有」ボタン(□に↑)→「ホーム画面に追加」で入れて、そこから開いてください。</div>`;
+  s += `<p class="ready" id="offlineNote">${SW_READY ? '📶 準備OK: このアプリは電波がなくても使えます' : '📶 電波なしで使う準備をしています…'}</p>`;
+  return s;
+}
+// ブラウザに「この記録は消さないで」と頼む(Safariの7日で消える仕組み対策)
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+if ('serviceWorker' in navigator && ON_WEB) {
+  navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready).then(() => {
+    SW_READY = true;
+    const n = document.getElementById('offlineNote');
+    if (n) n.textContent = '📶 準備OK: このアプリは電波がなくても使えます';
+  }).catch(() => {});
+}
+
+go('home');
+</script>
+</body>
+</html>
