@@ -1,6 +1,6 @@
 // 電波がない時でも動くように、アプリのファイルをスマホの中に控えておく仕組み。
 // アプリや問題を直したら VERSION の数字を上げる(スマホ側が新しい物を取り直す)。
-const VERSION = 4;
+const VERSION = 5;
 const CACHE = 'anzan-dojo-v' + VERSION;
 const FILES = [
   './', './index.html', './manifest.json', './data/tips.js',

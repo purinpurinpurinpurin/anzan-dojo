@@ -125,12 +125,34 @@ const TA_POOL = ['p10', 'p1', 'p5', 'p2030', 'p25', 'pswap', 'wari', 'kirine', '
 
 // ---------- 保存 ----------
 function blank() { return {st: {}, read: {}, rev: {}, days: {}, rank: -1, ta: {1: 0, 2: 0}, tot: {ok: 0, ng: 0}, dayok: {}}; }
-let S = blank();
+// 記録の形をそろえる(壊れた所や足りない所があっても止まらないように)
+function fixS(raw) {
+  const o = Object.assign(blank(), raw), isO = x => x && typeof x === 'object' && !Array.isArray(x);
+  for (const k of ['st', 'read', 'rev', 'days', 'dayok']) if (!isO(o[k])) o[k] = {};
+  if (!isO(o.tot)) o.tot = {ok: 0, ng: 0};
+  o.tot.ok = Number(o.tot.ok) || 0; o.tot.ng = Number(o.tot.ng) || 0;
+  if (!isO(o.ta)) o.ta = {1: 0, 2: 0};
+  o.rank = Number.isFinite(Number(o.rank)) ? Number(o.rank) : -1;
+  for (const id of Object.keys(o.st)) { const s = o.st[id]; if (!isO(s)) { delete o.st[id]; continue; } s.ok = Number(s.ok) || 0; s.ng = Number(s.ng) || 0; }
+  return o;
+}
+let S = blank(), LOAD_NOTE = '';
 try {
-  const raw = JSON.parse(localStorage.getItem(KEY) || 'null');
-  if (raw && typeof raw === 'object') S = Object.assign(blank(), raw);
-} catch (e) { S = blank(); }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { alert('記録を保存できませんでした'); } }
+  const txt = localStorage.getItem(KEY);
+  if (txt) {
+    try {
+      const raw = JSON.parse(txt);
+      if (raw && typeof raw === 'object') S = fixS(raw); else throw new Error();
+    } catch (e) {
+      // 壊れた記録は消さずに別の名前で控えてから、まっさらで始める
+      try { localStorage.setItem(KEY + '_broken', txt); } catch (e2) {}
+      LOAD_NOTE = '前の記録がうまく読めなかったので、控えに残して新しく始めました。';
+    }
+  }
+} catch (e) { LOAD_NOTE = 'このブラウザでは記録を保存できない設定です。閉じると記録は残りません。'; }
+let SAVE_WARNED = false;
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { if (!SAVE_WARNED) { SAVE_WARNED = true; alert('記録を保存できませんでした(スマホやPCの空き容量が少ないかもしれません)'); } } }
+if (LOAD_NOTE) setTimeout(() => alert(LOAD_NOTE), 500);
 
 // ---------- 小道具 ----------
 function h(s) { return String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c])); }
@@ -676,7 +698,7 @@ SCREENS.kiroku = function () {
     ${ts.map(t => { const s = S.st[t.id] || {ok: 0, ng: 0}, av = avgSec(t.id); return `<tr style="cursor:pointer" onclick="go('tip','${t.id}')"><td>${h(t.t)}</td><td>${stars(level(t.id))}</td><td>${s.ok}</td><td>${s.ng}</td><td>${av !== null ? av + '秒' : '-'}</td></tr>`; }).join('')}</table></div>`;
   }).join('')}
   <div class="sec">記録の控え</div><div class="card">
-    <p class="muted">記録はこのPCのブラウザ(Edge)に保存されています。念のため、下の「控えを作る」で出た文字をメモ帳などに保存しておくと安心です。</p>
+    <p class="muted">記録はこの端末のブラウザに保存されています。念のため、下の「控えを作る」で出た文字をメモ帳などに保存しておくと安心です。</p>
     <button class="sub-btn" onclick="document.getElementById('bk').value=JSON.stringify(S)">控えを作る</button>
     <button class="sub-btn" onclick="restore()">控えから戻す</button>
     <textarea id="bk" placeholder="ここに控えが出ます(戻す時はここに貼りつけてから「控えから戻す」)"></textarea></div>`;
@@ -686,9 +708,10 @@ function restore() {
   if (!t) { alert('控えの文字を貼りつけてください'); return; }
   try {
     const o = JSON.parse(t);
-    if (!o || typeof o !== 'object' || !o.st) throw new Error();
+    if (!o || typeof o !== 'object' || Array.isArray(o) || !o.st || typeof o.st !== 'object') throw new Error();
     if (!confirm('今の記録を、貼りつけた控えで上書きします。よいですか？')) return;
-    S = Object.assign(blank(), o); save(); alert('戻しました'); go('kiroku');
+    try { localStorage.setItem(KEY + '_before_restore', JSON.stringify(S)); } catch (e2) {}
+    S = fixS(o); save(); alert('戻しました'); go('kiroku');
   } catch (e) { alert('控えの形がちがうようです。全部コピーできているか確かめてね'); }
 }
 
